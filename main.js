@@ -28,17 +28,19 @@ define(function (require, exports, module) {
     "use strict";
     
     // Brackets modules
-    var InlineWidget            = brackets.getModule("editor/InlineWidget").InlineWidget,
+    var _                       = brackets.getModule("thirdparty/lodash"),
+        InlineWidget            = brackets.getModule("editor/InlineWidget").InlineWidget,
         EditorManager           = brackets.getModule("editor/EditorManager");
+    var inlineEditorTemplate    = require("text!regex-editor-template.html");
+    
     
     var TEST = /<.+>/;
+    var TEST2 = /(a|x)(b|y)(c|z)/;
     
     function RegexInlineEditor(regex) {
         InlineWidget.call(this);
         
-        // TODO: monospace font
-        // TODO: move into template (still inline CSS)
-        $("<input type='text' class='inline-regex-edit' style='margin-left:40px; margin-top:5px'><br><input type='text' class='inline-regex-sample' style='margin-left:40px'><br><span class='inline-regex-match' style='margin-left:40px'></span>").appendTo(this.$htmlContent);
+        $(inlineEditorTemplate).appendTo(this.$htmlContent);
         this.$htmlContent.find(".inline-regex-edit").val(regex);
         this.$htmlContent.find(".inline-regex-edit, .inline-regex-sample").on("input", this._handleChange.bind(this));
     }
@@ -49,21 +51,44 @@ define(function (require, exports, module) {
     // Setting initial height is a *required* part of the InlineWidget contract
     RegexInlineEditor.prototype.onAdded = function () {
         RegexInlineEditor.prototype.parentClass.onAdded.apply(this, arguments);
-        this.hostEditor.setInlineWidgetHeight(this, 120);
+        this.hostEditor.setInlineWidgetHeight(this, 100);
     };
     
     
     RegexInlineEditor.prototype._showError = function (message) {
-        this.$htmlContent.find(".inline-regex-match").text("Error: " + message);
+        this.$htmlContent.find(".inline-regex-error").text("Error: " + message);
+        this.$htmlContent.find(".inline-regex-match").hide();
+        this.$htmlContent.find(".inline-regex-groups").hide();
+        this.$htmlContent.find(".inline-regex-error").show();
     };
     RegexInlineEditor.prototype._showNoMatch = function () {
-        this.$htmlContent.find(".inline-regex-match").text("(no match)");
+        this.$htmlContent.find(".inline-regex-error").text("(no match)");
+        this.$htmlContent.find(".inline-regex-match").hide();
+        this.$htmlContent.find(".inline-regex-groups").hide();
+        this.$htmlContent.find(".inline-regex-error").show();
     };
     RegexInlineEditor.prototype._showMatch = function (match) {
-        this.$htmlContent.find(".inline-regex-match").text(match[0]);
+        var padding = "", i;
+        for (i = 0; i < match.index; i++) { padding += "&nbsp;"; }
+        this.$htmlContent.find(".inline-regex-match").html(padding + _.escape(match[0]));
+        
+        // Show capturing group matches
+        var groups = "";
+        for (i = 1; i < match.length; i++) {
+            if (i > 1) { groups += "&nbsp;&nbsp;"; }
+            groups += "<strong style='font-weight: bold'>$" + i + "</strong>&nbsp;";
+            groups += _.escape(match[i]);
+        }
+        this.$htmlContent.find(".inline-regex-groups").html(groups);
+        
+        this.$htmlContent.find(".inline-regex-match").show();
+        this.$htmlContent.find(".inline-regex-groups").show();
+        this.$htmlContent.find(".inline-regex-error").hide();
     };
     
     RegexInlineEditor.prototype._handleChange = function () {
+        // TODO: echo changes back into editor!!
+        
         var regexText = this.$htmlContent.find(".inline-regex-edit").val();
         var testText = this.$htmlContent.find(".inline-regex-sample").val();
         
@@ -83,6 +108,7 @@ define(function (require, exports, module) {
                 return;
             }
             
+            // TODO: multiple matches if "/g"
             var match = regex.exec(testText);
             if (!match) {
                 this._showNoMatch();
