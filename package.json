@@ -1,0 +1,9 @@
+{
+    "name": "pflynn.regex-editor",
+    "title": "Inline Regex Editor",
+    "homepage": "https://github.com/peterflynn/brackets-regex-editor",
+    "author": "Peter Flynn",
+    "version": "1.0.0",
+    "engines": { "brackets": ">=0.23" },
+    "description": "Inline regular expression editor for JavaScript code: test out matching, etc."
+}
