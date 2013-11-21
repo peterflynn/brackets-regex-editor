@@ -22,41 +22,63 @@
 
 
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, regexp: true */
-/*global define, brackets, $ */
+/*global define, brackets, $, CodeMirror */
 
 define(function (require, exports, module) {
     "use strict";
     
     // Brackets modules
     var _                       = brackets.getModule("thirdparty/lodash"),
+        ExtensionUtils          = brackets.getModule("utils/ExtensionUtils"),
         InlineWidget            = brackets.getModule("editor/InlineWidget").InlineWidget,
         EditorManager           = brackets.getModule("editor/EditorManager");
-    var inlineEditorTemplate    = require("text!regex-editor-template.html");
     
+    // Our own modules
+    var main                    = require("regex-mode");
+    
+    // UI templates
+    var inlineEditorTemplate    = require("text!regex-editor-template.html");
     
     var TEST = /<.+>/;
     var TEST2 = /(a|x)(b|y)(c|z)/;
     
+    
     function RegexInlineEditor(regex) {
         InlineWidget.call(this);
         
+        this.$htmlContent.addClass("inline-regex-editor");
         $(inlineEditorTemplate).appendTo(this.$htmlContent);
-        this.$htmlContent.find(".inline-regex-edit").val(regex);
-        this.$htmlContent.find(".inline-regex-edit, .inline-regex-sample").on("input", this._handleChange.bind(this));
+        
+        var $inputField = this.$htmlContent.find(".inline-regex-edit");
+        $inputField.val(regex);
+        this.cm = CodeMirror.fromTextArea($inputField[0], {
+            mode: "regex",
+            matchBrackets: true,
+            lineNumbers: false
+        });
+        this.cm.setSize(304, 22);
+        
+        this._handleChange = this._handleChange.bind(this);
+        this.cm.on("change", this._handleChange);
+        this.$htmlContent.find(".inline-regex-sample").on("input", this._handleChange);
     }
     RegexInlineEditor.prototype = Object.create(InlineWidget.prototype);
     RegexInlineEditor.prototype.constructor = RegexInlineEditor;
     RegexInlineEditor.prototype.parentClass = InlineWidget.prototype;
     
-    // Setting initial height is a *required* part of the InlineWidget contract
     RegexInlineEditor.prototype.onAdded = function () {
         RegexInlineEditor.prototype.parentClass.onAdded.apply(this, arguments);
+        
+        // Setting initial height is a *required* part of the InlineWidget contract
         this.hostEditor.setInlineWidgetHeight(this, 100);
+        
+        this.cm.refresh(); // must refresh CM after it's initially added to DOM
+        this.cm.focus();
     };
     
     
     RegexInlineEditor.prototype._showError = function (message) {
-        this.$htmlContent.find(".inline-regex-error").text("Error: " + message);
+        this.$htmlContent.find(".inline-regex-error").text(message);
         this.$htmlContent.find(".inline-regex-match").hide();
         this.$htmlContent.find(".inline-regex-groups").hide();
         this.$htmlContent.find(".inline-regex-error").show();
@@ -73,23 +95,24 @@ define(function (require, exports, module) {
         this.$htmlContent.find(".inline-regex-match").html(padding + _.escape(match[0]));
         
         // Show capturing group matches
-        var groups = "";
-        for (i = 1; i < match.length; i++) {
-            if (i > 1) { groups += "&nbsp;&nbsp;"; }
-            groups += "<strong style='font-weight: bold'>$" + i + "</strong>&nbsp;";
-            groups += _.escape(match[i]);
+        if (match.length > 1) {
+            var groups = "";
+            for (i = 1; i < match.length; i++) {
+                if (i > 1) { groups += "&nbsp;&nbsp;"; }
+                groups += "<strong style='font-weight: bold'>$" + i + "</strong>&nbsp;";
+                groups += _.escape(match[i]);
+            }
+            this.$htmlContent.find(".inline-regex-groups").html(groups).show();
+        } else {
+            this.$htmlContent.find(".inline-regex-groups").hide();
         }
-        this.$htmlContent.find(".inline-regex-groups").html(groups);
         
         this.$htmlContent.find(".inline-regex-match").show();
-        this.$htmlContent.find(".inline-regex-groups").show();
         this.$htmlContent.find(".inline-regex-error").hide();
     };
     
     RegexInlineEditor.prototype._handleChange = function () {
-        // TODO: echo changes back into editor!!
-        
-        var regexText = this.$htmlContent.find(".inline-regex-edit").val();
+        var regexText = this.cm.getValue();
         var testText = this.$htmlContent.find(".inline-regex-sample").val();
         
         // Can't construct a RegExp directly from the literal: have to strip off the
@@ -108,7 +131,6 @@ define(function (require, exports, module) {
                 return;
             }
             
-            // TODO: multiple matches if "/g"
             var match = regex.exec(testText);
             if (!match) {
                 this._showNoMatch();
@@ -157,6 +179,9 @@ define(function (require, exports, module) {
         
         return null;
     }
-
+    
+    
+    ExtensionUtils.loadStyleSheet(module, "regex-editor-styles.css");
+    
     EditorManager.registerInlineEditProvider(javaScriptFunctionProvider);
 });

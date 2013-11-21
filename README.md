@@ -1,6 +1,10 @@
 Inline Regex Editor for Brackets
 ================================
-Inline regular expression editor for JavaScript code: test out matching, etc. Just put your cursor on a regular expression literal and press Ctrl+E.
+Inline regular expression editor for JavaScript code: enter test strings and see matches in real time as you edit the regexp.
+Just put your cursor on a regular expression literal and press Ctrl+E to bring up the editor.
+
+Displays regular expressions with full colored syntax highlighting, and highlights matching parentheses (intelligently ignoring
+any escaped ones) when the cursor is next to one.
 
 
 How to Install
@@ -18,4 +22,4 @@ To install extensions:
 MIT-licensed -- see `main.js` for details.
 
 ### Compatibility
-Brackets Sprint 23 or newer (or any version???? of Adobe Edge Code).
+Brackets Sprint 23 or newer (Adobe Edge Code Preview 4 or newer).

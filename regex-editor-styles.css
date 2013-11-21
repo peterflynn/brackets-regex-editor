@@ -1,0 +1,55 @@
+.inline-regex-editor .CodeMirror {
+    margin: 7px 0 7px 40px;
+    
+    /* imitating <input> appearance */
+    background: white;
+    border: 1px solid #9c9e9e;
+    border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.12);
+}
+
+.inline-regex-editor .CodeMirror-focused {
+    /* imitating focused <input> appearance */
+    border: 1px solid #0940fd;
+    box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.12), 0 0 0 2px #6fb5f1;
+}
+
+.inline-regex-editor .CodeMirror-lines {
+    padding: 2px 0;
+}
+.inline-regex-editor .CodeMirror pre {
+    padding: 0 2px;
+}
+
+
+.inline-regex-editor .inline-regex-sample {
+    margin-left: 40px;
+    font-family: "SourceCodePro";
+    font-size: inherit;
+    padding: 2px;
+    width: 300px;
+}
+
+
+.inline-regex-editor .inline-regex-match {
+    margin-left: 43px;
+    font-family: "SourceCodePro";
+    font-size: inherit;
+    color: #000090
+}
+
+.inline-regex-editor .inline-regex-groups {
+    margin-left: 5px;
+    background-color: #d3d3ff;
+    border-radius: 4px;
+    padding: 0 3px;
+    font-family: "SourceCodePro";
+    font-size: inherit;
+    color: #000090;
+}
+
+.inline-regex-editor .inline-regex-error {
+    margin-left: 40px;
+    font-family: "SourceSansPro";
+    color: #be0000;
+}
