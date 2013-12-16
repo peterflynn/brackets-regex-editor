@@ -40,27 +40,61 @@ define(function (require, exports, module) {
     var inlineEditorTemplate    = require("text!regex-editor-template.html");
     
     var TEST = /<.+>/;
-    var TEST2 = /(a|x)(b|y)(c|z)/;
+    var TEST2 = /(a|x)(b|y)(c|z)/i;
+    
+    function findRegexToken(editor, pos) {
+        var token = editor._codeMirror.getTokenAt(pos, true); // token to LEFT of cursor
+        if (token.className === "string-2") {
+            return token;
+        }
+        
+        token = editor._codeMirror.getTokenAt({line: pos.line, ch: pos.ch + 1}, true); // token to RIGHT of cursor
+        if (token.className === "string-2") {
+            return token;
+        }
+        
+        return null;
+    }
     
     
-    function RegexInlineEditor(regex) {
+    function RegexInlineEditor(regex, pos) {
         InlineWidget.call(this);
+        this._origPos = pos;
         
         this.$htmlContent.addClass("inline-regex-editor");
         $(inlineEditorTemplate).appendTo(this.$htmlContent);
         
+        // Strip off the slash delimiters and separate out any flags
+        var reInfo = regex.match(/^\/(.*)\/([igm]*)$/);
+        if (!reInfo) {
+            this._showError("Not a regular expression");
+            reInfo = [regex, regex, ""];
+        }
+        
+        var $btnInsensitive = this.$htmlContent.find(".btn-regexp-insensitive");
+        $btnInsensitive
+            .toggleClass("active", reInfo[2].indexOf("i") !== -1)
+            .click(function () {
+                $btnInsensitive.toggleClass("active");
+                this._handleChange();
+            }.bind(this));
+        
         var $inputField = this.$htmlContent.find(".inline-regex-edit");
-        $inputField.val(regex);
+        $inputField.val(reInfo[1]);
         this.cm = CodeMirror.fromTextArea($inputField[0], {
             mode: "regex",
             matchBrackets: true,
             lineNumbers: false
         });
-        this.cm.setSize(304, 22);
+        this.cm.setSize(504, 28);
+        // TODO: map Tab back to moving focus
         
         this._handleChange = this._handleChange.bind(this);
         this.cm.on("change", this._handleChange);
         this.$htmlContent.find(".inline-regex-sample").on("input", this._handleChange);
+        
+        this._syncToCode = this._syncToCode.bind(this);
+        this.$htmlContent.find(".btn-regexp-done").click(this._syncToCode);
     }
     RegexInlineEditor.prototype = Object.create(InlineWidget.prototype);
     RegexInlineEditor.prototype.constructor = RegexInlineEditor;
@@ -111,21 +145,20 @@ define(function (require, exports, module) {
         this.$htmlContent.find(".inline-regex-error").hide();
     };
     
+    RegexInlineEditor.prototype._getFlags = function () {
+        return this.$htmlContent.find(".btn-regexp-insensitive").hasClass("active") ? "i" : "";
+    };
+    
     RegexInlineEditor.prototype._handleChange = function () {
         var regexText = this.cm.getValue();
         var testText = this.$htmlContent.find(".inline-regex-sample").val();
         
-        // Can't construct a RegExp directly from the literal: have to strip off the
-        // slash delimiters and separate out any flags
-        var reInfo = regexText.match(/^\/(.*)\/([igm]*)$/);
-        if (!reInfo) {
-            this._showError("Not a regular expression");
-        } else if (!reInfo[1]) {
+        if (!regexText) {
             this._showError("Empty regular expression is not valid");
         } else {
             var regex;
             try {
-                regex = new RegExp(reInfo[1], reInfo[2] || "");
+                regex = new RegExp(regexText, this._getFlags());
             } catch (ex) {
                 this._showError(ex.message);
                 return;
@@ -140,26 +173,37 @@ define(function (require, exports, module) {
         }
     };
     
+    RegexInlineEditor.prototype._syncToCode = function () {
+        var regexText = this.cm.getValue();
+        var regexCode = "/" + regexText + "/" + this._getFlags();
+        
+        // Rough way to re-find orig token... hopefully dependable enough
+        var token = findRegexToken(this.hostEditor, this._origPos);
+        
+        var chStart = token ? token.start : this._origPos.ch,
+            len = token ? token.string.length : 0;
+        this.hostEditor.document.replaceRange(regexCode, { line: this._origPos.line, ch: chStart }, { line: this._origPos.line, ch: chStart + len });
+        
+        this.close();
+    };
+    
     
     /**
      * @param {!Editor} hostEditor
      */
     function _createInlineEditor(hostEditor, pos, regexToken) {
-        var inlineEditor = new RegexInlineEditor(regexToken.string);
+        var inlineEditor = new RegexInlineEditor(regexToken.string, pos);
         inlineEditor.load(hostEditor);  // only needed to appease weird InlineWidget API
         
         return new $.Deferred().resolve(inlineEditor);
     }
-    
+        
     /**
-     * This function is registered with EditorManager as an inline editor provider. It creates an inline editor
-     * when the cursor is on a JavaScript function name, finds all functions that match the name
-     * and shows (one/all of them) in an inline editor.
+     * Provider registered with EditorManager
      *
      * @param {!Editor} editor
      * @param {!{line:Number, ch:Number}} pos
-     * @return {?$.Promise} a promise that will be resolved with an InlineWidget
-     *      or null if we're not going to provide anything.
+     * @return {?$.Promise} Promise resolved with a RegexInlineEditor, or null
      */
     function javaScriptFunctionProvider(hostEditor, pos) {
         // Only provide a JavaScript editor when cursor is in JavaScript content
@@ -167,16 +211,10 @@ define(function (require, exports, module) {
             return null;
         }
         
-        var token = hostEditor._codeMirror.getTokenAt(pos, true); // token to LEFT of cursor
-        if (token.className === "string-2") {
+        var token = findRegexToken(hostEditor, pos);
+        if (token) {
             return _createInlineEditor(hostEditor, pos, token);
         }
-        
-        token = hostEditor._codeMirror.getTokenAt({line: pos.line, ch: pos.ch + 1}, true); // token to RIGHT of cursor
-        if (token.className === "string-2") {
-            return _createInlineEditor(hostEditor, pos, token);
-        }
-        
         return null;
     }
     

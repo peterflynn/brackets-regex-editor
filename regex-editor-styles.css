@@ -1,6 +1,8 @@
 .inline-regex-editor .CodeMirror {
     margin: 7px 0 7px 40px;
     
+    display: inline-block; /* like an <input>; this way option buttons easily lay out to right of CM field */
+    
     /* imitating <input> appearance */
     background: white;
     border: 1px solid #9c9e9e;
@@ -9,25 +11,30 @@
 }
 
 .inline-regex-editor .CodeMirror-focused {
-    /* imitating focused <input> appearance */
-    border: 1px solid #0940fd;
-    box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.12), 0 0 0 2px #6fb5f1;
+    /* imitating focused <input> appearance - but with toned-down focus ring so syntax coloring easier to see */
+    border: 1px solid rgba(9, 64, 253, 0.5);
+    box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(111, 181, 241, 0.38);
+}
+.inline-regex-editor input[type='text']:focus {
+    border: 1px solid rgba(9, 64, 253, 0.5);
+    box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(111, 181, 241, 0.38);
 }
 
 .inline-regex-editor .CodeMirror-lines {
-    padding: 2px 0;
+    padding: 5px 0;
 }
 .inline-regex-editor .CodeMirror pre {
-    padding: 0 2px;
+    padding: 0 6px;
 }
 
 
 .inline-regex-editor .inline-regex-sample {
+    display: block; /* wrap onto next line */
     margin-left: 40px;
     font-family: "SourceCodePro";
     font-size: inherit;
     padding: 2px;
-    width: 300px;
+    width: 500px;
 }
 
 
