@@ -29,6 +29,7 @@ define(function (require, exports, module) {
     
     // Brackets modules
     var _                       = brackets.getModule("thirdparty/lodash"),
+        KeyEvent                = brackets.getModule("utils/KeyEvent"),
         ExtensionUtils          = brackets.getModule("utils/ExtensionUtils"),
         InlineWidget            = brackets.getModule("editor/InlineWidget").InlineWidget,
         EditorManager           = brackets.getModule("editor/EditorManager");
@@ -70,6 +71,7 @@ define(function (require, exports, module) {
             this._showError("Not a regular expression");
             reInfo = [regex, regex, ""];
         }
+        this._origText = reInfo[1];
         
         var $btnInsensitive = this.$htmlContent.find(".btn-regexp-insensitive");
         $btnInsensitive
@@ -87,14 +89,19 @@ define(function (require, exports, module) {
             lineNumbers: false
         });
         this.cm.setSize(504, 28);
-        // TODO: map Tab back to moving focus
         
         this._handleChange = this._handleChange.bind(this);
         this.cm.on("change", this._handleChange);
-        this.$htmlContent.find(".inline-regex-sample").on("input", this._handleChange);
+        
+        this.$sampleInput = this.$htmlContent.find(".inline-regex-sample")
+            .on("input", this._handleChange);
         
         this._syncToCode = this._syncToCode.bind(this);
-        this.$htmlContent.find(".btn-regexp-done").click(this._syncToCode);
+        this.$btnDone = this.$htmlContent.find(".btn-regexp-done")
+            .click(this._syncToCode)
+            .addClass("disabled");  // enabled when modified
+        
+        this.$htmlContent[0].addEventListener("keydown", this._handleKeyDown.bind(this), true);
     }
     RegexInlineEditor.prototype = Object.create(InlineWidget.prototype);
     RegexInlineEditor.prototype.constructor = RegexInlineEditor;
@@ -104,12 +111,31 @@ define(function (require, exports, module) {
         RegexInlineEditor.prototype.parentClass.onAdded.apply(this, arguments);
         
         // Setting initial height is a *required* part of the InlineWidget contract
-        this.hostEditor.setInlineWidgetHeight(this, 100);
+        this.hostEditor.setInlineWidgetHeight(this, 102);
         
         this.cm.refresh(); // must refresh CM after it's initially added to DOM
         this.cm.focus();
     };
     
+    
+    RegexInlineEditor.prototype._handleKeyDown = function (event) {
+        if (event.keyCode === KeyEvent.DOM_VK_TAB) {
+            // Create a closed tab cycle within the widget
+            if (this.cm.hasFocus()) {
+                this.$sampleInput.focus();
+                event.stopPropagation();  // don't insert tab in CM field
+            } else {
+                this.cm.focus();
+            }
+            event.preventDefault();
+            
+        } else if (event.keyCode === KeyEvent.DOM_VK_RETURN) {
+            if (this.cm.hasFocus()) {
+                event.stopPropagation();  // don't insert newline in CM field
+                // TODO: not thorough enough... could still paste, etc.
+            }
+        }
+    };
     
     RegexInlineEditor.prototype._showError = function (message) {
         this.$htmlContent.find(".inline-regex-error").text(message);
@@ -151,7 +177,9 @@ define(function (require, exports, module) {
     
     RegexInlineEditor.prototype._handleChange = function () {
         var regexText = this.cm.getValue();
-        var testText = this.$htmlContent.find(".inline-regex-sample").val();
+        var testText = this.$sampleInput.val();
+        
+        this.$btnDone.toggleClass("disabled", this._origText === regexText);
         
         if (!regexText) {
             this._showError("Empty regular expression is not valid");
