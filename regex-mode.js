@@ -62,7 +62,7 @@ define(function (require, exports, module) {
             
             if (newScope === "(") {
                 if (stream.match(/\?[:=!]/)) {
-                    // ?: is non-greedy qualifier
+                    // ?: is non-capturing qualifier
                     // ?= and ?! are only-if-[not]-followed-by directives, technically making the whole group a quantifier
                     state.quantifiable = false;
                     return "keyword";
@@ -140,7 +140,7 @@ define(function (require, exports, module) {
         if (ch === "(") {
             pushNest();
             state.quantifiable = false;
-            return null;
+            return "bracket";
         } else if (ch === "[") {
             pushNest();
             state.quantifiable = false;
@@ -149,7 +149,7 @@ define(function (require, exports, module) {
             state.quantifiable = true;  // overall group can be quantified
             if (scope === "(") {
                 popNest();
-                return null;
+                return "bracket";
             } else {
                 return "error";
             }
@@ -177,10 +177,8 @@ define(function (require, exports, module) {
                 return "error";
             }
         }
-        if (ch === "+" || ch === "*") {
-            stream.eat("?");  // +? or *? (non-greedy quantifier)
-            return handleQuantifier();
-        } else if (ch === "?") {
+        if (ch === "+" || ch === "*" || ch === "?") {
+            stream.eat("?");  // +? or *? or ?? (non-greedy quantifier)
             return handleQuantifier();
         } else if (ch === "{") {
             if (stream.match(/\d+(,\d*)?\}/)) {
@@ -202,8 +200,11 @@ define(function (require, exports, module) {
     }
     
     
-    CodeMirror.defineMode("regex", function () {
+    var modeFactory = function () {
         return { token: token, startState: startState };
-    });
+    };
     
+    CodeMirror.defineMode("regex", modeFactory);
+    
+    exports.mode = modeFactory();
 });

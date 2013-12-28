@@ -26,6 +26,15 @@
 .inline-regex-editor .CodeMirror pre {
     padding: 0 6px;
 }
+.inline-regex-editor .CodeMirror .regex-group-highlight {
+    background-color: rgba(123, 137, 217, 0.37);
+}
+.inline-regex-editor .CodeMirror .rgh-first {
+    border-radius: 3px 0 0 3px;
+}
+.inline-regex-editor .CodeMirror .rgh-last {
+    border-radius: 0 3px 3px 0;
+}
 
 
 .inline-regex-editor .inline-regex-sample {
@@ -54,9 +63,30 @@
     font-size: inherit;
     color: #000090;
 }
+.inline-regex-editor .inline-regex-groups .regex-group-match {
+    padding: 0 5px;
+}
+.inline-regex-editor .inline-regex-groups .regex-group-match.unmatched-group {
+    opacity: 0.50;
+}
+.inline-regex-editor .inline-regex-groups .regex-group-match:hover {
+    background-color: #9f9ff5;
+}
+.inline-regex-editor .inline-regex-groups .regex-group-match strong {
+    font-weight: bold;
+}
 
 .inline-regex-editor .inline-regex-error {
     margin-left: 40px;
     font-family: "SourceSansPro";
     color: #be0000;
+}
+
+.inline-regex-editor .sample-match-overlay {
+    position: absolute;
+    pointer-events: none;
+    background-color: rgba(123, 137, 217, 0.37);
+    border-radius: 2px;
+    height: 18px;
+    top: 47px;
 }

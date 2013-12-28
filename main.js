@@ -35,7 +35,8 @@ define(function (require, exports, module) {
         EditorManager           = brackets.getModule("editor/EditorManager");
     
     // Our own modules
-    var main                    = require("regex-mode");
+    var mode                    = require("regex-mode").mode,
+        RegexUtil               = require("RegexUtil");
     
     // UI templates
     var inlineEditorTemplate    = require("text!regex-editor-template.html");
@@ -102,6 +103,9 @@ define(function (require, exports, module) {
             .addClass("disabled");  // enabled when modified
         
         this.$htmlContent[0].addEventListener("keydown", this._handleKeyDown.bind(this), true);
+        
+        this.$htmlContent.find(".inline-regex-groups").on("mouseenter", ".regex-group-match", this._handleGroupMouseover.bind(this));
+        this.$htmlContent.find(".inline-regex-groups").on("mouseleave", ".regex-group-match", this._overlayFullMatch.bind(this));
     }
     RegexInlineEditor.prototype = Object.create(InlineWidget.prototype);
     RegexInlineEditor.prototype.constructor = RegexInlineEditor;
@@ -141,15 +145,18 @@ define(function (require, exports, module) {
         this.$htmlContent.find(".inline-regex-error").text(message);
         this.$htmlContent.find(".inline-regex-match").hide();
         this.$htmlContent.find(".inline-regex-groups").hide();
+        this.$htmlContent.find(".sample-match-overlay").hide();
         this.$htmlContent.find(".inline-regex-error").show();
     };
     RegexInlineEditor.prototype._showNoMatch = function () {
         this.$htmlContent.find(".inline-regex-error").text("(no match)");
         this.$htmlContent.find(".inline-regex-match").hide();
         this.$htmlContent.find(".inline-regex-groups").hide();
+        this.$htmlContent.find(".sample-match-overlay").hide();
         this.$htmlContent.find(".inline-regex-error").show();
     };
-    RegexInlineEditor.prototype._showMatch = function (match) {
+    RegexInlineEditor.prototype._showMatch = function () {
+        var match = this._match;
         var padding = "", i;
         for (i = 0; i < match.index; i++) { padding += "&nbsp;"; }
         this.$htmlContent.find(".inline-regex-match").html(padding + _.escape(match[0]));
@@ -158,9 +165,13 @@ define(function (require, exports, module) {
         if (match.length > 1) {
             var groups = "";
             for (i = 1; i < match.length; i++) {
-                if (i > 1) { groups += "&nbsp;&nbsp;"; }
-                groups += "<strong style='font-weight: bold'>$" + i + "</strong>&nbsp;";
-                groups += _.escape(match[i]);
+                if (match[i] !== undefined) {
+                    groups += "<span class='regex-group-match' data-groupnum='" + i + "'><strong>$" + i + "</strong>&nbsp;";
+                    groups += _.escape(match[i]);
+                    groups += "</span>";
+                } else {
+                    groups += "<span class='regex-group-match unmatched-group' data-groupnum='" + i + "'><strong>$" + i + "</strong></span>";
+                }
             }
             this.$htmlContent.find(".inline-regex-groups").html(groups).show();
         } else {
@@ -169,10 +180,41 @@ define(function (require, exports, module) {
         
         this.$htmlContent.find(".inline-regex-match").show();
         this.$htmlContent.find(".inline-regex-error").hide();
+        this._overlayFullMatch();
     };
     
     RegexInlineEditor.prototype._getFlags = function () {
         return this.$htmlContent.find(".btn-regexp-insensitive").hasClass("active") ? "i" : "";
+    };
+    
+    RegexInlineEditor.prototype._highlightSampleText = function (start, len) {
+        var $overlay = this.$htmlContent.find(".sample-match-overlay").show();
+        $overlay.css("left", 43 + 7 * start);
+        $overlay.css("width", 7 * len);
+    };
+    RegexInlineEditor.prototype._overlayFullMatch = function () {
+        this._highlightSampleText(this._match.index, this._match[0].length);
+        
+        if (this._regexGroupHighlight) {
+            this._regexGroupHighlight.clear();
+            this._regexGroupHighlight = null;
+        }
+    };
+    RegexInlineEditor.prototype._handleGroupMouseover = function (event) {
+        var regexText = this.cm.getValue();
+        var testText = this.$sampleInput.val();
+        var groupI = parseInt($(event.currentTarget).data("groupnum"), 10);
+        
+        var inRegex = RegexUtil.findGroupInRegex(regexText, groupI);
+        this._regexGroupHighlight = this.cm.markText({line: 0, ch: inRegex.start}, {line: 0, ch: inRegex.end},
+                                           {className: "regex-group-highlight", startStyle: "rgh-first", endStyle: "rgh-last" });
+        
+        var inSample = RegexUtil.findGroupInMatch(regexText, this._getFlags(), testText, this._match, groupI, inRegex);
+        if (inSample) {
+            this._highlightSampleText(inSample.start, inSample.end - inSample.start);
+        } else {
+            this.$htmlContent.find(".sample-match-overlay").hide();
+        }
     };
     
     RegexInlineEditor.prototype._handleChange = function () {
@@ -192,11 +234,11 @@ define(function (require, exports, module) {
                 return;
             }
             
-            var match = regex.exec(testText);
-            if (!match) {
+            this._match = regex.exec(testText);
+            if (!this._match) {
                 this._showNoMatch();
             } else {
-                this._showMatch(match);
+                this._showMatch();
             }
         }
     };
