@@ -89,7 +89,8 @@ define(function (require, exports, module) {
             matchBrackets: true,
             lineNumbers: false
         });
-        this.cm.setSize(504, 28);
+        this.cm.setSize(554, null);
+        // The CM editor has "auto" height; in practice, it's only ever 1 line tall but height still grows if h scrollbar shown
         
         this._handleChange = this._handleChange.bind(this);
         this.cm.on("change", this._handleChange);
@@ -114,11 +115,17 @@ define(function (require, exports, module) {
     RegexInlineEditor.prototype.onAdded = function () {
         RegexInlineEditor.prototype.parentClass.onAdded.apply(this, arguments);
         
-        // Setting initial height is a *required* part of the InlineWidget contract
-        this.hostEditor.setInlineWidgetHeight(this, 102);
-        
         this.cm.refresh(); // must refresh CM after it's initially added to DOM
+        
+        // Setting initial height is a *required* part of the InlineWidget contract
+        // (must be after cm.refresh() so computed vertical size is accurate)
+        this._adjustHeight();
+        
         this.cm.focus();
+    };
+    RegexInlineEditor.prototype._adjustHeight = function () {
+        var inlineWidgetHeight = this.$htmlContent.find(".inline-regex-output").position().top + 28;
+        this.hostEditor.setInlineWidgetHeight(this, inlineWidgetHeight);
     };
     
     
@@ -136,6 +143,7 @@ define(function (require, exports, module) {
         } else if (event.keyCode === KeyEvent.DOM_VK_RETURN) {
             if (this.cm.hasFocus()) {
                 event.stopPropagation();  // don't insert newline in CM field
+                event.preventDefault();
                 // TODO: not thorough enough... could still paste, etc.
             }
         }
@@ -189,8 +197,9 @@ define(function (require, exports, module) {
     
     RegexInlineEditor.prototype._highlightSampleText = function (start, len) {
         var $overlay = this.$htmlContent.find(".sample-match-overlay").show();
-        $overlay.css("left", 43 + 7 * start);
+        $overlay.css("left", 47 + 7 * start);
         $overlay.css("width", 7 * len);
+        $overlay.css("top", this.$sampleInput.position().top);
     };
     RegexInlineEditor.prototype._overlayFullMatch = function () {
         this._highlightSampleText(this._match.index, this._match[0].length);
@@ -241,6 +250,8 @@ define(function (require, exports, module) {
                 this._showMatch();
             }
         }
+        
+        this._adjustHeight();  // in case CM h scrollbar added/removed
     };
     
     RegexInlineEditor.prototype._syncToCode = function () {

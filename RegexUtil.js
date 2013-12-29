@@ -115,7 +115,7 @@ define(function (require, exports, module) {
         // We don't support groups with quantifiers yet - only the last match is captured, and we don't yet have a way to figure
         // out the length of the uncaptures repeated matches before that.
         var tokenAfterGroup = tokens[groupPos.endTokenI + 1];
-        if (tokenAfterGroup.style === "rangeinfo") {
+        if (tokenAfterGroup && tokenAfterGroup.style === "rangeinfo") {
             return null;
         }
         

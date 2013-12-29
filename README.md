@@ -2,7 +2,7 @@ Inline Regex Editor for Brackets
 ================================
 For those times when you need to [swoop in and save the day with a regular expression](https://xkcd.com/208/).
 
-Just put your cursor on a regular expression literal and press Ctrl+E to bring up the editor. Enter test strings and see matches
+Just put your cursor on a JavaScript regular expression and press Ctrl+E to bring up the editor. Enter test strings and see matches
 in real time as you edit the regexp.
 
 * Displays regular expressions with full colored syntax highlighting
