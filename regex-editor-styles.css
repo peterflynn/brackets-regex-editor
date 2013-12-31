@@ -1,7 +1,21 @@
+.inline-regex-regex-row, .inline-regex-sample-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    padding-left: 40px;
+    padding-right: 45px;
+}
+.inline-regex-editor .CodeMirror, .inline-regex-sample {
+    flex: 1 1 auto;  /* fully flexible */
+}
+.inline-regex-regex-row > button {
+    flex: 0 0 auto;  /* inflexible (natural size only, never larger/smaller) */
+}
+
 .inline-regex-editor .CodeMirror {
-    margin: 7px 0 7px 40px;
-    
-    display: inline-block; /* like an <input>; this way option buttons easily lay out to right of CM field */
+    margin: 8px 0;
     
     /* imitating <input> appearance */
     background: white;
@@ -42,19 +56,20 @@
     border-radius: 0 3px 3px 0;
 }
 
+.btn-regexp-insensitive, .btn-regexp-done {
+    margin-left: 10px;
+}
+
 
 .inline-regex-editor .inline-regex-sample {
-    display: block; /* wrap onto next line */
-    margin-left: 40px;
     font-family: "SourceCodePro";
     font-size: inherit;
     padding: 2px 2px 2px 6px; /* 6px aligns L edge of text with CM field above */
-    width: 546px;
 }
 
 
 .inline-regex-editor .inline-regex-match {
-    margin-left: 43px;
+    margin-left: 47px;
     font-family: "SourceCodePro";
     font-size: inherit;
     color: #000090

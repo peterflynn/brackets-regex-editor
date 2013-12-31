@@ -24,6 +24,10 @@
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, regexp: true */
 /*global define, brackets, $, CodeMirror */
 
+/**
+ * "Some people, when confronted with a problem, think 'I know, I'll use regular expressions!' Now they have two problems."
+ *                                                                                                      - Jamie Zawinski
+ */
 define(function (require, exports, module) {
     "use strict";
     
@@ -89,8 +93,8 @@ define(function (require, exports, module) {
             matchBrackets: true,
             lineNumbers: false
         });
-        this.cm.setSize(554, null);
-        // The CM editor has "auto" height; in practice, it's only ever 1 line tall but height still grows if h scrollbar shown
+        // The CM editor has "auto" height; in practice, it's only ever 1 line tall but height still grows if h scrollbar shown.
+        // Its width is determined by its parent layout (a flexbox for now).
         
         this._handleChange = this._handleChange.bind(this);
         this.cm.on("change", this._handleChange);
@@ -124,7 +128,7 @@ define(function (require, exports, module) {
         this.cm.focus();
     };
     RegexInlineEditor.prototype._adjustHeight = function () {
-        var inlineWidgetHeight = this.$htmlContent.find(".inline-regex-output").position().top + 28;
+        var inlineWidgetHeight = this.$htmlContent.find(".inline-regex-output-row").position().top + 28;
         this.hostEditor.setInlineWidgetHeight(this, inlineWidgetHeight);
     };
     
