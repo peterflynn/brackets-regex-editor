@@ -126,6 +126,8 @@ define(function (require, exports, module) {
         this._adjustHeight();
         
         this.cm.focus();
+        
+        this._handleChange();  // initial update to show any syntax errors
     };
     RegexInlineEditor.prototype._adjustHeight = function () {
         var inlineWidgetHeight = this.$htmlContent.find(".inline-regex-output-row").position().top + 28;
@@ -155,17 +157,26 @@ define(function (require, exports, module) {
     
     RegexInlineEditor.prototype._showError = function (message) {
         this.$htmlContent.find(".inline-regex-error").text(message);
+        this.$htmlContent.find(".inline-regex-error").show();
         this.$htmlContent.find(".inline-regex-match").hide();
         this.$htmlContent.find(".inline-regex-groups").hide();
         this.$htmlContent.find(".sample-match-overlay").hide();
-        this.$htmlContent.find(".inline-regex-error").show();
     };
-    RegexInlineEditor.prototype._showNoMatch = function () {
-        this.$htmlContent.find(".inline-regex-error").text("(no match)");
+    RegexInlineEditor.prototype._showNoMatch = function (testText) {
+        if (!testText && !this._testTextModified) {
+            // Don't show "no match" message if no test text ever entered before (but if it has been touched
+            // and now is blank again, we assume user really wants to know if the regex matches empty string)
+            this.$htmlContent.find(".inline-regex-error").hide();
+        } else {
+            this.$htmlContent.find(".inline-regex-error").text("(no match)");
+            this.$htmlContent.find(".inline-regex-error").show();
+            if (testText) {
+                this._testTextModified = true;
+            }
+        }
         this.$htmlContent.find(".inline-regex-match").hide();
         this.$htmlContent.find(".inline-regex-groups").hide();
         this.$htmlContent.find(".sample-match-overlay").hide();
-        this.$htmlContent.find(".inline-regex-error").show();
     };
     RegexInlineEditor.prototype._showMatch = function () {
         var match = this._match;
@@ -249,7 +260,7 @@ define(function (require, exports, module) {
             
             this._match = regex.exec(testText);
             if (!this._match) {
-                this._showNoMatch();
+                this._showNoMatch(testText);
             } else {
                 this._showMatch();
             }
