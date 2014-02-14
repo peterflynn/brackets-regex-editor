@@ -36,7 +36,8 @@ define(function (require, exports, module) {
         KeyEvent                = brackets.getModule("utils/KeyEvent"),
         ExtensionUtils          = brackets.getModule("utils/ExtensionUtils"),
         InlineWidget            = brackets.getModule("editor/InlineWidget").InlineWidget,
-        EditorManager           = brackets.getModule("editor/EditorManager");
+        EditorManager           = brackets.getModule("editor/EditorManager"),
+        ViewCommandHandlers     = brackets.getModule("view/ViewCommandHandlers");
     
     // Our own modules
     var mode                    = require("regex-mode").mode,
@@ -60,6 +61,36 @@ define(function (require, exports, module) {
         }
         
         return null;
+    }
+    
+    // taken from Brackets' view/ViewCommandHandlers.js
+    function getFontStyle() {
+        var fsStyle = $(".CodeMirror").css("font-size");
+        var lhStyle = $(".CodeMirror").css("line-height");
+        
+        var validFont = /^[\d\.]+(px|em)$/;
+        
+        // Make sure the font size and line height are expressed in terms
+        // we can handle (px or em). If not, simply bail.
+        if (fsStyle.search(validFont) === -1 || lhStyle.search(validFont) === -1) {
+            return;
+        }
+        
+        // Guaranteed to work by the validation above.
+        var fsUnits = fsStyle.substring(fsStyle.length - 2, fsStyle.length);
+        var lhUnits = lhStyle.substring(lhStyle.length - 2, lhStyle.length);
+        
+        var fs  = parseFloat(fsStyle.substring(0, fsStyle.length - 2));
+        var lh  = parseFloat(lhStyle.substring(0, lhStyle.length - 2));
+        
+        if (fsUnits === "em") {
+            fs *= 10;
+        }
+        if (lhUnits === "em") {
+            lh *= 10;
+        }
+        
+        return {size: fs, height: lh};
     }
     
     
@@ -111,6 +142,8 @@ define(function (require, exports, module) {
         
         this.$htmlContent.find(".inline-regex-groups").on("mouseenter", ".regex-group-match", this._handleGroupMouseover.bind(this));
         this.$htmlContent.find(".inline-regex-groups").on("mouseleave", ".regex-group-match", this._overlayFullMatch.bind(this));
+        
+        $(ViewCommandHandlers).on("fontSizeChange", this._overlayFullMatch.bind(this));
     }
     RegexInlineEditor.prototype = Object.create(InlineWidget.prototype);
     RegexInlineEditor.prototype.constructor = RegexInlineEditor;
@@ -211,9 +244,13 @@ define(function (require, exports, module) {
     };
     
     RegexInlineEditor.prototype._highlightSampleText = function (start, len) {
-        var $overlay = this.$htmlContent.find(".sample-match-overlay").show();
-        $overlay.css("left", 47 + 7 * start);
-        $overlay.css("width", 7 * len);
+        var $overlay    = this.$htmlContent.find(".sample-match-overlay").show(),
+            fontStyle   = getFontStyle(),
+            overlaySize = Math.round(fontStyle.size / 1.85) + 1 || 7,
+            self = this;
+        
+        $overlay.css("left", 47 + overlaySize * start);
+        $overlay.css("width", overlaySize * len);
         $overlay.css("top", this.$sampleInput.position().top);
     };
     RegexInlineEditor.prototype._overlayFullMatch = function () {
@@ -293,7 +330,7 @@ define(function (require, exports, module) {
         
         return new $.Deferred().resolve(inlineEditor);
     }
-        
+    
     /**
      * Provider registered with EditorManager
      *
