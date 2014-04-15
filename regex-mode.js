@@ -35,7 +35,8 @@ define(function (require, exports, module) {
     "use strict";
     
     // Brackets modules
-    var LanguageManager     = brackets.getModule("language/LanguageManager");
+    var LanguageManager     = brackets.getModule("language/LanguageManager"),
+        CodeMirror          = brackets.getModule("thirdparty/CodeMirror2/lib/codemirror");
     
     
     function clearState(state) {

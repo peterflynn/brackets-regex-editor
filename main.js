@@ -36,7 +36,8 @@ define(function (require, exports, module) {
         KeyEvent                = brackets.getModule("utils/KeyEvent"),
         ExtensionUtils          = brackets.getModule("utils/ExtensionUtils"),
         InlineWidget            = brackets.getModule("editor/InlineWidget").InlineWidget,
-        EditorManager           = brackets.getModule("editor/EditorManager");
+        EditorManager           = brackets.getModule("editor/EditorManager"),
+        CodeMirror              = brackets.getModule("thirdparty/CodeMirror2/lib/codemirror");
     
     // Our own modules
     var mode                    = require("regex-mode").mode,
@@ -50,12 +51,12 @@ define(function (require, exports, module) {
     
     function findRegexToken(editor, pos) {
         var token = editor._codeMirror.getTokenAt(pos, true); // token to LEFT of cursor
-        if (token.className === "string-2") {
+        if (token.type === "string-2") {
             return token;
         }
         
         token = editor._codeMirror.getTokenAt({line: pos.line, ch: pos.ch + 1}, true); // token to RIGHT of cursor
-        if (token.className === "string-2") {
+        if (token.type === "string-2") {
             return token;
         }
         

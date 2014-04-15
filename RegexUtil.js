@@ -166,17 +166,17 @@ define(function (require, exports, module) {
         prefixGroups.unshift(lastGroupI);
         console.assert(lastGroupI === 1);
         
-        console.log("NewRegexText:", newRegexText);
+//        console.log("NewRegexText:", newRegexText);
         
         // Adjust each prefix group's number to account for other prefix groups preceding it
         for (i = 1; i < prefixGroups.length; i++) {
             prefixGroups[i] += i;
         }
-        console.log("PrefixGroups:", prefixGroups);
+//        console.log("PrefixGroups:", prefixGroups);
         
         var newRegex = new RegExp(newRegexText, options);
         var newMatch = newRegex.exec(sampleText);
-        console.log("NewRegex:", newRegexText, "->", newMatch);
+//        console.log("NewRegex:", newRegexText, "->", newMatch);
         
         // Sum the lengths of all our prefix groups' matching strings to get the offset of the target group's match
         var offsetFromMatchStart = 0;
@@ -187,7 +187,7 @@ define(function (require, exports, module) {
             }
         }
         var start = newMatch.index + offsetFromMatchStart;
-        console.log("Offset:", offsetFromMatchStart, "-> Start:", start, "End:", (start + match[groupI].length));
+//        console.log("Offset:", offsetFromMatchStart, "-> Start:", start, "End:", (start + match[groupI].length));
         return { start: start, end: start + match[groupI].length };
     }
     
