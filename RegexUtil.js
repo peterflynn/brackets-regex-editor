@@ -22,7 +22,7 @@
 
 
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, regexp: true */
-/*global define, brackets, CodeMirror */
+/*global define, brackets */
 
 /**
  * Utilities for working with regular expressions and their matches
@@ -31,8 +31,8 @@ define(function (require, exports, module) {
     "use strict";
     
     // Our own modules
-    var mode                    = require("regex-mode").mode;
-    
+    var mode                    = require("regex-mode").mode,
+        CodeMirror              = brackets.getModule("thirdparty/CodeMirror2/lib/codemirror");
     
     /**
      * Run our tokenizer over the regex and return an array of informal "token" objects
