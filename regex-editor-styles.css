@@ -75,6 +75,10 @@
     color: #000090
 }
 
+.dark .inline-regex-editor .inline-regex-match {
+    color: #33ccff;
+}
+
 .inline-regex-editor .inline-regex-groups {
     margin-left: 5px;
     background-color: #d3d3ff;
@@ -84,6 +88,10 @@
     font-size: inherit;
     color: #000090;
 }
+.dark .inline-regex-editor .inline-regex-groups {
+    background-color: #000033;
+    color: #33ccff;
+}
 .inline-regex-editor .inline-regex-groups .regex-group-match {
     padding: 0 5px;
 }
@@ -92,6 +100,9 @@
 }
 .inline-regex-editor .inline-regex-groups .regex-group-match:hover {
     background-color: #9f9ff5;
+}
+.dark .inline-regex-editor .inline-regex-groups .regex-group-match:hover {
+    background-color: #000066;
 }
 .inline-regex-editor .inline-regex-groups .regex-group-match strong {
     font-weight: bold;
