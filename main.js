@@ -197,7 +197,7 @@ define(function (require, exports, module) {
                     groups += "<span class='regex-group-match unmatched-group' data-groupnum='" + i + "'><strong>$" + i + "</strong></span>";
                 }
             }
-            this.$htmlContent.find(".inline-regex-groups").html(groups).show();
+            this.$htmlContent.find(".inline-regex-groups").html(groups).css("display", "inline").show();
         } else {
             this.$htmlContent.find(".inline-regex-groups").hide();
         }
