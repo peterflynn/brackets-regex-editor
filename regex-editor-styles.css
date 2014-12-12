@@ -56,7 +56,7 @@
     border-radius: 0 3px 3px 0;
 }
 
-.btn-regexp-insensitive, .btn-regexp-done {
+.btn-regexp-insensitive, .btn-regexp-global, .btn-regexp-done {
     margin-left: 10px;
 }
 

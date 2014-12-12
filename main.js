@@ -87,6 +87,14 @@ define(function (require, exports, module) {
                 this._handleChange();
             }.bind(this));
         
+        var $btnGlobal = this.$htmlContent.find(".btn-regexp-global");
+        $btnGlobal
+            .toggleClass("active", reInfo[2].indexOf("g") !== -1)
+            .click(function () {
+                $btnGlobal.toggleClass("active");
+                this._handleChange();
+            }.bind(this));
+        
         var $inputField = this.$htmlContent.find(".inline-regex-edit");
         $inputField.val(reInfo[1]);
         this.cm = CodeMirror.fromTextArea($inputField[0], {
@@ -94,6 +102,7 @@ define(function (require, exports, module) {
             matchBrackets: true,
             lineNumbers: false
         });
+        
         // The CM editor has "auto" height; in practice, it's only ever 1 line tall but height still grows if h scrollbar shown.
         // Its width is determined by its parent layout (a flexbox for now).
         
@@ -180,50 +189,76 @@ define(function (require, exports, module) {
         this.$htmlContent.find(".sample-match-overlay").hide();
     };
     RegexInlineEditor.prototype._showMatch = function () {
-        var match = this._match;
-        var padding = "", i;
-        for (i = 0; i < match.index; i++) { padding += "&nbsp;"; }
-        this.$htmlContent.find(".inline-regex-match").html(padding + _.escape(match[0]));
-        
-        // Show capturing group matches
-        if (match.length > 1) {
-            var groups = "";
-            for (i = 1; i < match.length; i++) {
-                if (match[i] !== undefined) {
-                    groups += "<span class='regex-group-match' data-groupnum='" + i + "'><strong>$" + i + "</strong>&nbsp;";
-                    groups += _.escape(match[i]);
-                    groups += "</span>";
-                } else {
-                    groups += "<span class='regex-group-match unmatched-group' data-groupnum='" + i + "'><strong>$" + i + "</strong></span>";
-                }
+        var j;
+        var matchString = "";
+        for (j = 0; j < this._matches.length; j++) {
+            var match = this._matches[j];
+            var padding = "", i;
+            var previousMatchLength;
+            var previousMatchIndex = j - 1;
+            if (previousMatchIndex < 0 || previousMatchIndex >= this._matches.length) {
+                previousMatchLength = 0;
+            } else {
+                previousMatchLength = this._matches[j - 1][0].length + this._matches[j - 1].index;
             }
-            this.$htmlContent.find(".inline-regex-groups").html(groups).show();
-        } else {
-            this.$htmlContent.find(".inline-regex-groups").hide();
+            
+            for (i = previousMatchLength; i < match.index; i++) { padding += "&nbsp;"; }
+            matchString += padding + _.escape(match[0]);
+
+            // Show capturing group matches
+            if (match.length > 1) {
+                var groups = "";
+                for (i = 1; i < match.length; i++) {
+                    if (match[i] !== undefined) {
+                        groups += "<span class='regex-group-match' data-groupnum='" + i + "'><strong>$" + i + "</strong>&nbsp;";
+                        groups += _.escape(match[i]);
+                        groups += "</span>";
+                    } else {
+                        groups += "<span class='regex-group-match unmatched-group' data-groupnum='" + i + "'><strong>$" + i + "</strong></span>";
+                    }
+                }
+                this.$htmlContent.find(".inline-regex-groups").html(groups).show();
+            } else {
+                this.$htmlContent.find(".inline-regex-groups").hide();
+            }
+
+
         }
-        
+        this.$htmlContent.find(".inline-regex-match").html(matchString);
         this.$htmlContent.find(".inline-regex-match").show();
         this.$htmlContent.find(".inline-regex-error").hide();
         this._overlayFullMatch();
     };
     
     RegexInlineEditor.prototype._getFlags = function () {
-        return this.$htmlContent.find(".btn-regexp-insensitive").hasClass("active") ? "i" : "";
+        var flags = "";
+        flags += this.$htmlContent.find(".btn-regexp-global").hasClass("active") ? "g" : "";
+        flags += this.$htmlContent.find(".btn-regexp-insensitive").hasClass("active") ? "i" : "";
+        return flags;
     };
     
-    RegexInlineEditor.prototype._highlightSampleText = function (start, len) {
-        var $overlay = this.$htmlContent.find(".sample-match-overlay").show();
+    RegexInlineEditor.prototype._highlightSampleText = function (start, len, number) {
+        var $parentOfOverlays = this.$htmlContent.find(".inline-regex-sample-row");
+        $parentOfOverlays.append("<span class='sample-match-overlay' id='match-overlay-" + number + "'></span>");
+        var $overlay = this.$htmlContent.find("#match-overlay-" + number).show();
         $overlay.css("left", 47 + 7 * start);
         $overlay.css("width", 7 * len);
         $overlay.css("top", this.$sampleInput.position().top);
     };
     RegexInlineEditor.prototype._overlayFullMatch = function () {
-        this._highlightSampleText(this._match.index, this._match[0].length);
+        this.$htmlContent.find(".sample-match-overlay").remove();
+        
+        var i;
+        for (i = 0; i < this._matches.length; i++) {
+            var match = this._matches[i];
+            this._highlightSampleText(match.index, match[0].length, i);
+        }
         
         if (this._regexGroupHighlight) {
             this._regexGroupHighlight.clear();
             this._regexGroupHighlight = null;
         }
+
     };
     RegexInlineEditor.prototype._handleGroupMouseover = function (event) {
         var regexText = this.cm.getValue();
@@ -259,8 +294,14 @@ define(function (require, exports, module) {
                 return;
             }
             
-            this._match = regex.exec(testText);
-            if (!this._match) {
+            this._matches = [];
+            
+            var match;
+            while ((match = regex.exec(testText)) !== null) {
+                this._matches.push(match);
+            }
+            
+            if (this._matches.length === 0) {
                 this._showNoMatch(testText);
             } else {
                 this._showMatch();
